@@ -8,7 +8,7 @@ dependencies = [
     "uvicorn>=0.24.0",
     "pydantic>=2.0.0",
     "openai>=1.52.0",
-    "pylance",
+    "pylance>=13.0.0,<14",
     "fsspec",
     "gcsfs",
 ]
@@ -17,7 +17,7 @@ authors = [{ name = "Lance Devs", email = "dev@lancedb.com" }]
 license = { file = "LICENSE" }
 repository = "https://github.com/lancedb/lance-graph"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["graph", "cypher", "lance", "arrow"]
 categories = ["database", "science"]
 classifiers = [
@@ -28,7 +28,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

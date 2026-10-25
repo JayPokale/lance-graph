@@ -109,13 +109,19 @@ impl TableReader for DeltaTableReader {
             ))
         })?;
 
-        ctx.register_table(table_name, Arc::new(delta_table))
-            .map_err(|e| {
-                CatalogError::Other(format!(
-                    "Failed to register Delta table '{}': {}",
-                    table_name, e
-                ))
-            })?;
+        let provider = delta_table.table_provider().await.map_err(|e| {
+            CatalogError::Other(format!(
+                "Failed to build Delta table provider for '{}': {}",
+                table_name, e
+            ))
+        })?;
+
+        ctx.register_table(table_name, provider).map_err(|e| {
+            CatalogError::Other(format!(
+                "Failed to register Delta table '{}': {}",
+                table_name, e
+            ))
+        })?;
 
         Ok(())
     }
@@ -129,4 +135,77 @@ pub fn default_table_readers() -> Vec<Arc<dyn TableReader>> {
     #[cfg(feature = "delta")]
     readers.push(Arc::new(DeltaTableReader));
     readers
+}
+
+#[cfg(all(test, feature = "delta"))]
+mod tests {
+    use super::*;
+    use arrow_array::{Int64Array, RecordBatch, StringArray};
+    use lance_graph_catalog::catalog_provider::TableType;
+
+    #[tokio::test]
+    async fn delta_reader_queries_partitioned_table() {
+        let dir = tempfile::tempdir().unwrap();
+        let location = url::Url::from_directory_path(dir.path()).unwrap();
+        let batch = RecordBatch::try_from_iter(vec![
+            (
+                "id",
+                Arc::new(Int64Array::from(vec![1, 2, 3])) as arrow_array::ArrayRef,
+            ),
+            (
+                "group",
+                Arc::new(StringArray::from(vec!["a", "b", "a"])) as arrow_array::ArrayRef,
+            ),
+        ])
+        .unwrap();
+        let schema = batch.schema();
+        deltalake::DeltaTable::try_from_url(location.clone())
+            .await
+            .unwrap()
+            .write(vec![batch])
+            .with_partition_columns(["group"])
+            .await
+            .unwrap();
+
+        let table = TableInfo {
+            name: "items".into(),
+            catalog_name: "test".into(),
+            schema_name: "default".into(),
+            table_type: TableType::External,
+            data_source_format: DataSourceFormat::Delta,
+            columns: vec![],
+            storage_location: Some(location.to_string()),
+            comment: None,
+            properties: HashMap::new(),
+            created_at: None,
+            updated_at: None,
+        };
+        let ctx = SessionContext::new();
+        DeltaTableReader
+            .register_table(&ctx, "items", &table, schema, &HashMap::new())
+            .await
+            .unwrap();
+
+        let batches = ctx
+            .sql("SELECT id FROM items WHERE \"group\" = 'a' ORDER BY id")
+            .await
+            .unwrap()
+            .collect()
+            .await
+            .unwrap();
+        let ids: Vec<i64> = batches
+            .iter()
+            .flat_map(|batch| {
+                batch
+                    .column(0)
+                    .as_any()
+                    .downcast_ref::<Int64Array>()
+                    .unwrap()
+                    .values()
+                    .iter()
+                    .copied()
+            })
+            .collect();
+        assert_eq!(ids, vec![1, 3]);
+    }
 }
