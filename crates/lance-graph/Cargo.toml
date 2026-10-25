@@ -11,11 +11,11 @@ keywords = ["lance", "graph", "cypher", "query", "datafusion"]
 categories = ["database", "data-structures", "science"]
 
 [dependencies]
-arrow = { version = "56.2", features = ["prettyprint"] }
-arrow-array = "56.2"
-arrow-schema = "56.2"
+arrow = { version = "58.4", features = ["prettyprint"] }
+arrow-array = "58.4"
+arrow-schema = "58.4"
 async-trait = "0.1"
-datafusion = { version = "50.3", default-features = false, features = [
+datafusion = { version = "54.1", default-features = false, features = [
     "nested_expressions",
     "regex_expressions",
     "unicode_expressions",
@@ -25,29 +25,32 @@ datafusion = { version = "50.3", default-features = false, features = [
     "string_expressions",
     "parquet",
 ] }
-datafusion-common = "50.3"
-datafusion-expr = "50.3"
-datafusion-sql = "50.3"
-datafusion-functions-aggregate = "50.3"
+datafusion-common = "54.1"
+datafusion-expr = "54.1"
+datafusion-sql = "54.1"
+datafusion-functions-aggregate = "54.1"
 futures = "0.3"
 lance-graph-catalog = { path = "../lance-graph-catalog", version = "0.5.4" }
-lance = "1.0.0"
-lance-linalg = "1.0.0"
-lance-namespace = "1.0.1"
+lance = "13.0.0"
+lance-linalg = "13.0.0"
+lance-namespace = "13.0.0"
 nom = "7.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 snafu = "0.8"
-deltalake = { version = "0.29", features = ["datafusion", "s3", "azure", "gcs"], optional = true }
+# Delta has no crates.io release on DataFusion 54; pin the last compatible revision.
+deltalake = { git = "https://github.com/delta-io/delta-rs", rev = "37ee982736b645b4d3f79a5d59e680add229a58c", features = ["datafusion", "s3", "azure", "gcs"], optional = true }
+# Kernel 0.25 uses parse_column_name, which was removed in derive 1.2.
+buoyant_kernel_derive = { version = "=1.1.0", optional = true }
 url = { version = "2", optional = true }
 
 [features]
 default = ["unity-catalog", "delta"]
 unity-catalog = ["lance-graph-catalog/unity-catalog"]
-delta = ["dep:deltalake", "dep:url"]
+delta = ["dep:deltalake", "dep:buoyant_kernel_derive", "dep:url"]
 
 [dev-dependencies]
 futures = "0.3"
-lance-arrow = "1.0.0"
+lance-arrow = "13.0.0"
 tempfile = "3"
 tokio = { version = "1.37", features = ["macros", "rt-multi-thread"] }
