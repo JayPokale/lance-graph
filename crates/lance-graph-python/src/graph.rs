@@ -27,8 +27,7 @@ use lance_graph::{
     ast::{DistanceMetric as RustDistanceMetric, GraphPattern, ReadingClause},
     CypherQuery as RustCypherQuery, ExecutionStrategy as RustExecutionStrategy,
     GraphConfig as RustGraphConfig, GraphError as RustGraphError, InMemoryCatalog,
-    SqlDialect as RustSqlDialect, SqlQuery as RustSqlQuery,
-    VectorSearch as RustVectorSearch,
+    SqlDialect as RustSqlDialect, SqlQuery as RustSqlQuery, VectorSearch as RustVectorSearch,
 };
 use pyo3::{
     exceptions::{PyNotImplementedError, PyRuntimeError, PyValueError},
@@ -42,7 +41,7 @@ use crate::namespace::PyDirNamespace;
 use crate::RT;
 
 /// Execution strategy for Cypher queries
-#[pyclass(name = "ExecutionStrategy", module = "lance.graph")]
+#[pyclass(name = "ExecutionStrategy", module = "lance.graph", from_py_object)]
 #[derive(Clone, Copy)]
 pub enum ExecutionStrategy {
     /// Use DataFusion query planner (default, full feature support)
@@ -61,7 +60,7 @@ impl From<ExecutionStrategy> for RustExecutionStrategy {
 }
 
 /// SQL dialect for generating SQL from Cypher queries
-#[pyclass(name = "SqlDialect", module = "lance.graph")]
+#[pyclass(name = "SqlDialect", module = "lance.graph", from_py_object)]
 #[derive(Clone, Copy)]
 pub enum SqlDialect {
     /// Generic SQL (DataFusion default dialect)
@@ -89,7 +88,7 @@ impl From<SqlDialect> for RustSqlDialect {
 }
 
 /// Distance metric for vector similarity search
-#[pyclass(name = "DistanceMetric", module = "lance.graph")]
+#[pyclass(name = "DistanceMetric", module = "lance.graph", from_py_object)]
 #[derive(Clone, Copy)]
 pub enum DistanceMetric {
     /// L2 (Euclidean) distance - smaller is more similar
@@ -129,7 +128,7 @@ impl From<DistanceMetric> for RustDistanceMetric {
 /// ...     .metric(DistanceMetric.Cosine) \
 /// ...     .top_k(10) \
 /// ...     .search(table)
-#[pyclass(name = "VectorSearch", module = "lance.graph")]
+#[pyclass(name = "VectorSearch", module = "lance.graph", from_py_object)]
 #[derive(Clone)]
 pub struct VectorSearch {
     inner: RustVectorSearch,
@@ -322,7 +321,7 @@ pub(crate) fn graph_error_to_pyerr(err: RustGraphError) -> PyErr {
 }
 
 /// Graph configuration for interpreting Lance datasets as property graphs
-#[pyclass(name = "GraphConfig", module = "lance.graph")]
+#[pyclass(name = "GraphConfig", module = "lance.graph", from_py_object)]
 #[derive(Clone)]
 pub struct GraphConfig {
     inner: RustGraphConfig,
@@ -358,7 +357,7 @@ impl GraphConfig {
 }
 
 /// Builder for GraphConfig
-#[pyclass(name = "GraphConfigBuilder", module = "lance.graph")]
+#[pyclass(name = "GraphConfigBuilder", module = "lance.graph", from_py_object)]
 #[derive(Clone)]
 pub struct GraphConfigBuilder {
     inner: lance_graph::config::GraphConfigBuilder,
@@ -434,7 +433,7 @@ impl GraphConfigBuilder {
 }
 
 /// Cypher query interface for Lance datasets
-#[pyclass(name = "CypherQuery", module = "lance.graph")]
+#[pyclass(name = "CypherQuery", module = "lance.graph", from_py_object)]
 #[derive(Clone)]
 pub struct CypherQuery {
     inner: RustCypherQuery,
